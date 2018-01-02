@@ -3,6 +3,7 @@
  * 2018.01.01
  */
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h> 
 #include <netdb.h>
@@ -21,20 +22,27 @@ int main(int argc, char *argv[])
 {
     char *host = "0.0.0.0";
     char *port = "1200";
+    char *number = "";
+    
     switch (argc) {
         case 1:
             break;
+        case 4:
+            host = argv[3];
         case 3:
             port = argv[2];
         case 2:
-            host = argv[1];
+            number = argv[1];
             break;
         default:
             break;
     }
     
     int s = connectTCP(host, port);
-    
+    ssize_t size = write(s, (void *)number, strlen(number));
+    if (write(s, (void *)number, strlen(number)) == -1)
+        errexit("send data error: %s\n", strerror(errno));
+
     return 0;
 }
 

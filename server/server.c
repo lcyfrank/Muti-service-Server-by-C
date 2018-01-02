@@ -14,14 +14,17 @@
 #define MAX_QUEUE_LENGTH 32
 #define	MAX(x, y)	((x) > (y) ? (x) : (y))
 
-// these functions is provided by teacher
+// this functions is provided by teacher
 int errexit(const char *format, ...);
+
 int passiveTCP(const char *port, int qlen);
+void handleRequest(int fd);
 
 int main(int argc, char *argv[])
 {
     int max_fd, current_fd;
     fd_set fds;
+    fd_set b_fds;  // backup
     FD_ZERO(&fds);
     
     // base port number
@@ -49,9 +52,12 @@ int main(int argc, char *argv[])
     FD_SET(sum_socket, &fds);
     FD_SET(reserve_socket, &fds);
     
+    memcpy(&b_fds, &fds, sizeof(fds));
+    
     max_fd = (MAX(sum_socket, reserve_socket)) + 1;
     while(1) {
-        // waif for readable sockfd
+        memcpy(&fds, &b_fds, sizeof(fds));
+        // wait for readable sockfd
         if(select(max_fd, &fds, (fd_set *)0, (fd_set *)0, (struct timeval *)0) < 0) {
             if(errno == EINTR)
                 continue;
@@ -60,10 +66,31 @@ int main(int argc, char *argv[])
         // look for request
         for(current_fd = 0; current_fd < max_fd; current_fd++) {
             if (FD_ISSET(current_fd, &fds)) {
-                printf("%d", current_fd);
+                handleRequest(current_fd);
             }
         }
+        printf("finish!");
     }
+}
+
+void handleRequest(int fd)
+{
+    struct sockaddr_in fsin;
+    unsigned int alen;
+    alen = sizeof(fsin);
+    
+    char buffer[100];
+    
+    
+    int new_fd = accept(fd, (struct sockaddr *)&fsin, &alen);
+    if (new_fd < 0)
+        errexit("accept error: %s\n", strerror(errno));
+    
+    printf("accept successfully\n");
+    if (read(new_fd, buffer, 100) < 0)
+        errexit("read error: %s\n", strerror(errno));
+    
+    printf("read data: %s\n", buffer);
 }
 
 int passiveTCP(const char *port, int qlen)
