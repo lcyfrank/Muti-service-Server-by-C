@@ -39,9 +39,9 @@ int main(int argc, char *argv[])
     }
     
     int s = connectTCP(host, port);
-    ssize_t size = write(s, (void *)number, strlen(number));
-    if (write(s, (void *)number, strlen(number)) == -1)
+    if (write(s, (void *)number, strlen(number)) < 0)
         errexit("send data error: %s\n", strerror(errno));
+    close(s);
 
     return 0;
 }

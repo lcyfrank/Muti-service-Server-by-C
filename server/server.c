@@ -2,13 +2,15 @@
  * created by frank
  * 2018.01.01
  */
- 
+
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
 #define MAX_QUEUE_LENGTH 32
@@ -19,6 +21,8 @@ int errexit(const char *format, ...);
 
 int passiveTCP(const char *port, int qlen);
 void handleRequest(int fd);
+
+static int service_fds[2];
 
 int main(int argc, char *argv[])
 {
@@ -52,6 +56,9 @@ int main(int argc, char *argv[])
     FD_SET(sum_socket, &fds);
     FD_SET(reserve_socket, &fds);
     
+    service_fds[0] = sum_socket;
+    service_fds[1] = reserve_socket;
+    
     memcpy(&b_fds, &fds, sizeof(fds));
     
     max_fd = (MAX(sum_socket, reserve_socket)) + 1;
@@ -69,7 +76,6 @@ int main(int argc, char *argv[])
                 handleRequest(current_fd);
             }
         }
-        printf("finish!");
     }
 }
 
@@ -80,17 +86,32 @@ void handleRequest(int fd)
     alen = sizeof(fsin);
     
     char buffer[100];
-    
+    memset(buffer, 0, 100);
     
     int new_fd = accept(fd, (struct sockaddr *)&fsin, &alen);
     if (new_fd < 0)
         errexit("accept error: %s\n", strerror(errno));
     
-    printf("accept successfully\n");
     if (read(new_fd, buffer, 100) < 0)
         errexit("read error: %s\n", strerror(errno));
     
-    printf("read data: %s\n", buffer);
+    int flag = fork();
+    switch (flag)
+    {
+        case 0:  // parent
+            return;
+        case -1:
+            errexit("fork error: %s\n", strerror(errno));
+            break;
+        default:
+            break;
+    }
+    // child
+    if (fd == service_fds[0])
+        execl("/home/lincy/Desktop/Muti-service Server by C/services/Sum", buffer);
+    else 
+        execl("/home/lincy/Desktop/Muti-service Server by C/services/Reverse", buffer);
+    exit(0);
 }
 
 int passiveTCP(const char *port, int qlen)
