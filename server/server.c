@@ -108,9 +108,9 @@ void handleRequest(int fd)
     }
     // child
     if (fd == service_fds[0])
-        execl("/home/lincy/Desktop/Muti-service Server by C/services/Sum", buffer);
+        execl("/home/lincy/Desktop/Muti-service Server by C/services/Sum", "Sum", buffer, (char *)NULL);
     else 
-        execl("/home/lincy/Desktop/Muti-service Server by C/services/Reverse", buffer);
+        execl("/home/lincy/Desktop/Muti-service Server by C/services/Reverse", "Reverse", buffer, (char *)NULL);
     exit(0);
 }
 
