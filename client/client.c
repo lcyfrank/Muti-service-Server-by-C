@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
 // this function is provided by teacher 
@@ -23,6 +24,8 @@ int main(int argc, char *argv[])
     char *host = "0.0.0.0";
     char *port = "1200";
     char *number = "";
+    char buffer[100];
+    memset(buffer, 0, 100);
     
     switch (argc) {
         case 1:
@@ -41,7 +44,13 @@ int main(int argc, char *argv[])
     int s = connectTCP(host, port);
     if (write(s, (void *)number, strlen(number)) < 0)
         errexit("send data error: %s\n", strerror(errno));
-    close(s);
+    
+    int n = -1;
+    while ((n = read(s, buffer, sizeof(buffer))) > 0) {
+        buffer[n] = '\0';
+        printf("%s\n", buffer);
+        break;
+    }
 
     return 0;
 }

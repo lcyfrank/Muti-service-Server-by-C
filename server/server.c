@@ -107,6 +107,8 @@ void handleRequest(int fd)
             break;
     }
     // child
+    close(1);
+    dup2(new_fd, 1);
     if (fd == service_fds[0])
         execl("/home/lincy/Desktop/Muti-service Server by C/services/Sum", "Sum", buffer, (char *)NULL);
     else 
